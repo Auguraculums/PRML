@@ -124,9 +124,10 @@ function opt = getOpts(initParams)
     opt.initParams        = initParams;
     opt.nCol              = length(initParams);
     opt.nsamples          = 10000; 
-%     opt.bounds            = (ones(opt.nCol,2) * diag([0, 1000]))';
-    opt.bounds            = [0    0    0   0   0    0    0   0 ; 
-                            5000  200  15  5  1.5e5  100  50  25];
+    opt.bounds            = [0   0   0   0   0    0   0   0 ; 
+                             50  60  15  5  2e3  100  50  25];
+    opt.idxParam          = [1, 5];
+    opt.idxConst          = [4, 7];
     opt.burnin            = 500;
     opt.printint          = 100;
     opt.convergint        = 200;
