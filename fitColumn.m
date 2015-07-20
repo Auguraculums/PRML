@@ -811,13 +811,19 @@ function [initChain, MetricTensor] = initChainGenerator(FUNC, beta, opt)
     initChain = rand(opt.Nchain, opt.nCol+1);
     MetricTensor = cell(1, opt.Nchain);
     
-%     for k = 1: opt.nCol
-%         initChain(:,k) = opt.bounds(1,k) + initChain(:,k) .* (opt.bounds(2,k) - opt.bounds(1,k));
-%     end
+    for k = 1: opt.nCol
+        initChain(:,k) = opt.bounds(1,k) + initChain(:,k) .* (opt.bounds(2,k) - opt.bounds(1,k));
+    end
  
+    initChain = Constraints(initChain, opt);
+    
+    evalChain = ParameterTransformation(initChain, opt);
+    
     for j = 1: opt.Nchain
         
-        [Res, Jac] = feval(FUNC, initChain(j, 1:opt.nCol));
+        [Res, Jac] = feval(FUNC, evalChain(j, 1:opt.nCol));
+        Jac = JacobianChainRule(Jac, initChain(j, :), opt);
+        
         initChain(j,opt.nCol+1) = Res' * Res;
         Sigma2 = (initChain(j, opt.nCol+1) / (opt.nObserv - opt.nCol));
         
@@ -849,13 +855,13 @@ function [states, MetricTensor, opt] = PT_mRMMALA_sampler(FUNC, states, MetricTe
         proposal = states(j,1:opt.nCol) + 0.5 * opt.epsilon^2 * (MetricTensor{j}.G \...
             MetricTensor{j}.GradL)'+ opt.epsilon * randn(1,opt.nCol) * MetricTensor{j}.sqrtInvG;
             
-        for ii = 1: opt.nCol
-            if proposal(ii) > opt.bounds(2,ii)
-                proposal(ii) = rand*opt.bounds(2,ii);
-            elseif proposal(ii) < opt.bounds(1,ii)
-                proposal(ii) = rand*(opt.bounds(1,ii)+1e-5);
-            end
-        end
+%         for ii = 1: opt.nCol
+%             if proposal(ii) > opt.bounds(2,ii)
+%                 proposal(ii) = rand*opt.bounds(2,ii);
+%             elseif proposal(ii) < opt.bounds(1,ii)
+%                 proposal(ii) = rand*(opt.bounds(1,ii)+1e-5);
+%             end
+%         end
         
 %         DATA.it       = j;
 %         DATA.opt      = opt;
@@ -864,8 +870,15 @@ function [states, MetricTensor, opt] = PT_mRMMALA_sampler(FUNC, states, MetricTe
 %         DATA.invG     = MetricTensor{j}.invG;
 %         DATA.GradL    = MetricTensor{j}.GradL;
 %         DATA.cholInvG = MetricTensor{j}.cholInvG;
+
+        proposal = Constraints(proposal, opt);
         
-        [newRes, newJac] = feval(FUNC, proposal);
+        evalChain = ParameterTransformation(proposal, opt);
+
+        [newRes, newJac] = feval(FUNC, evalChain);
+        
+        newJac = JacobianChainRule(newJac, proposal, opt);
+        
         newSS = newRes' * newRes;               
         SS    = states(j,opt.nCol+1);
         
@@ -1016,6 +1029,80 @@ function y=gammar(a,b)
     
 end
 
+function evalChain = ParameterTransformation(initChain, opt)
+
+    evalChain = initChain(:, 1:opt.nCol);
+    
+    for i = opt.idxParam
+%         evalChain(:, i) = log( exp(evalChain(:, i+1)) .* exp(evalChain(:, i)) );
+        evalChain(:, i) = evalChain(:, i+1) .* evalChain(:, i);
+    end
+
+end
+
+function Jac_theta = JacobianChainRule(Jac_psi, parameter, opt)
+
+    nabla_psi = eye(opt.nCol);
+    
+    for i = opt.idxParam
+        nabla_psi(i, i) = parameter(i+1);
+        nabla_psi(i, i+1) = parameter(i);
+    end
+    
+    Jac_theta = Jac_psi * nabla_psi;
+
+end
+
+function initChain = Constraints(initChain, opt)
+    
+    [R, ~] = size(initChain);
+    
+    for i = 1: R
+        for j = 1: opt.nCol
+            if initChain(i,j) > opt.bounds(2,j) || initChain(i,j) < opt.bounds(1,j)
+                initChain(i,j) = opt.bounds(1,j) + (opt.bounds(2,j)-opt.bounds(1,j))*rand;
+            end
+        end
+    end
+
+
+    for i = 1:R
+        if initChain(i, opt.idxConst(1)) > initChain(i, opt.idxConst(2))
+            initChain(i, opt.idxConst(1)) = initChain(i, opt.idxConst(2)) * rand;
+        end
+    end
+%     nu_1 < nu_2
+    for i = 1:R
+        if initChain(i, opt.idxConst(1)+1) > initChain(i, opt.idxConst(2)+1)
+            initChain(i, opt.idxConst(1)+1) = initChain(i, opt.idxConst(2)+1) * rand;
+        end
+    end
+%     sigma_1 < sigma_2
+
+%          
+%    for j = opt.idxConst(1)-1
+%         for i = 1:R
+%             if initChain(i,j) > initChain(i, opt.idxConst(2)) ...
+%                     || initChain(i, j) < initChain(i, opt.idxConst(1))
+%                 initChain(i,j) = initChain(i, opt.idxConst(1)) + ...
+%                     ( initChain(i,opt.idxConst(2)) - initChain(i,opt.idxConst(1)) ) * rand;
+%             end
+%         end
+%    end
+% %     sigma_1 < nu_1 < nu_2
+%      
+%    for j = opt.idxConst(2)+1
+%         for i = 1:R
+%             if initChain(i, j) > initChain(i, opt.idxConst(2)) ...
+%                     || initChain(i, j) < initChain(i, opt.idxConst(1))
+%                 initChain(i, j) = initChain(i, opt.idxConst(1)) + ...
+%                     ( initChain(i,opt.idxConst(2)) - initChain(i,opt.idxConst(1)) ) * rand;
+%             end
+%         end
+%    end
+%     sigma_1 < sigma_2 < nu_2
+
+end
 % =============================================================================
 %  CADET - The Chromatography Analysis and Design Toolkit
 %  

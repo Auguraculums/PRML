@@ -316,7 +316,7 @@ classdef Simulator < handle
             %       extraction of CADET's results (default: false)
             %
             % Returns: Same struct as Simulator.simulate()
-            fprintf('parameter: [%g,%g,%g,%g,%g,%g,%g,%g] \n', params);
+            fprintf('parameter: [%g,%g,%g,%g,%g,%g,%g,%g,%g,%g] \n', params);
             if (nargin <= 2)
                 params = [];
             end
