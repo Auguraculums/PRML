@@ -1071,28 +1071,35 @@ function initChain = Constraints(initChain, opt)
             initChain(i, opt.idxConst(1)) = initChain(i, opt.idxConst(2)) * rand;
         end
     end
-%     sigma_1 < nu_2
-         
-   for j = opt.idxConst(1)-1
-        for i = 1:R
-            if initChain(i,j) > initChain(i, opt.idxConst(2)) ...
-                    || initChain(i, j) < initChain(i, opt.idxConst(1))
-                initChain(i,j) = initChain(i, opt.idxConst(1)) + ...
-                    ( initChain(i,opt.idxConst(2)) - initChain(i,opt.idxConst(1)) ) * rand;
-            end
+%     nu_1 < nu_2
+    for i = 1:R
+        if initChain(i, opt.idxConst(1)+1) > initChain(i, opt.idxConst(2)+1)
+            initChain(i, opt.idxConst(1)+1) = initChain(i, opt.idxConst(2)+1) * rand;
         end
-   end
-%     sigma_1 < nu_1 < nu_2
-     
-   for j = opt.idxConst(2)+1
-        for i = 1:R
-            if initChain(i, j) > initChain(i, opt.idxConst(2)) ...
-                    || initChain(i, j) < initChain(i, opt.idxConst(1))
-                initChain(i, j) = initChain(i, opt.idxConst(1)) + ...
-                    ( initChain(i,opt.idxConst(2)) - initChain(i,opt.idxConst(1)) ) * rand;
-            end
-        end
-   end
+    end
+%     sigma_1 < sigma_2
+
+%          
+%    for j = opt.idxConst(1)-1
+%         for i = 1:R
+%             if initChain(i,j) > initChain(i, opt.idxConst(2)) ...
+%                     || initChain(i, j) < initChain(i, opt.idxConst(1))
+%                 initChain(i,j) = initChain(i, opt.idxConst(1)) + ...
+%                     ( initChain(i,opt.idxConst(2)) - initChain(i,opt.idxConst(1)) ) * rand;
+%             end
+%         end
+%    end
+% %     sigma_1 < nu_1 < nu_2
+%      
+%    for j = opt.idxConst(2)+1
+%         for i = 1:R
+%             if initChain(i, j) > initChain(i, opt.idxConst(2)) ...
+%                     || initChain(i, j) < initChain(i, opt.idxConst(1))
+%                 initChain(i, j) = initChain(i, opt.idxConst(1)) + ...
+%                     ( initChain(i,opt.idxConst(2)) - initChain(i,opt.idxConst(1)) ) * rand;
+%             end
+%         end
+%    end
 %     sigma_1 < sigma_2 < nu_2
 
 end

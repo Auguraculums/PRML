@@ -5,9 +5,10 @@ function FitMultiStateSMA
     load('dataset1'); load('model1'); % dataset 1 
 
 %% Fitting variables 
-    params = [{'SPRSMA_KA1'}, {'SPRSMA_KD1'},{'SPRSMA_NU1'}, {'SPRSMA_SIGMA1'}, ...
-        {'SPRSMA_KA2'}, {'SPRSMA_KD2'},{'SPRSMA_NU2'}, {'SPRSMA_SIGMA2'}];%
-    comps = [2 2 2 2 2 2 2 2];
+    params = [{'SPRSMA_KA1'}, {'SPRSMA_KD1'}, {'SPRSMA_NU1'}, {'SPRSMA_SIGMA1'},...
+        {'SPRSMA_KA2'}, {'SPRSMA_KD2'}, {'SPRSMA_NU2'}, {'SPRSMA_SIGMA2'}, ...
+        {'SPRSMA_K12'}, {'SPRSMA_K21'}];%
+    comps = [2 2 2 2 2 2 2 2 2 2];
     secs = -ones(1,length(comps)); 
 
     fitData = cell(1,1);
@@ -30,7 +31,7 @@ function FitMultiStateSMA
     loBound   = [];%
     upBound   = [];%
     
-    initParams = [1 1 1 1 1 1 1 1];%
+    initParams = [1 1 1 1 1 1 1 1 1 1];%
     logScale = false(length(initParams), 1); % Enable log scaling
  
     opt = getOpts(initParams);
@@ -64,13 +65,13 @@ function [sim] = createModel(tOut,inletmodel)
     model.bindingParameters.SPRSMA_LAMBDA      = 2*inletmodel.bindingParameters.BISMA_LAMBDA1 ;
     model.bindingParameters.SPRSMA_KA1         = [0 0];
     model.bindingParameters.SPRSMA_KD1         = [0 1e-30];
-    model.bindingParameters.SPRSMA_NU1         = [0 23];
-    model.bindingParameters.SPRSMA_SIGMA1      = [0 62];
+    model.bindingParameters.SPRSMA_NU1         = [0 8.76];
+    model.bindingParameters.SPRSMA_SIGMA1      = [0 0.0];
     
     model.bindingParameters.SPRSMA_KA2         = [0 0];
     model.bindingParameters.SPRSMA_KD2         = [0 0];
-    model.bindingParameters.SPRSMA_NU2         = [0 17.5];
-    model.bindingParameters.SPRSMA_SIGMA2      = [0 20.6];
+    model.bindingParameters.SPRSMA_NU2         = [0 43.067];
+    model.bindingParameters.SPRSMA_SIGMA2      = [0 21.6888];
     model.bindingParameters.SPRSMA_K12         = [0.0 0];
     model.bindingParameters.SPRSMA_K21         = [0.0 0]; 
 
@@ -124,17 +125,17 @@ function opt = getOpts(initParams)
     opt.initParams        = initParams;
     opt.nCol              = length(initParams);
     opt.nsamples          = 10000; 
-    opt.bounds            = [0   0   0   0   0    0   0   0 ; 
-                             50  60  15  5  2e3  100  50  25];
+    opt.bounds            = [10  1  6 1e-7 1000  1  45  8  1e-2 1e-20; 
+                             14  2  8 1    2000  2  50  14 1e30 1e2];
     opt.idxParam          = [1, 5];
-    opt.idxConst          = [4, 7];
+    opt.idxConst          = [3, 7];
     opt.burnin            = 500;
     opt.printint          = 100;
     opt.convergint        = 200;
     opt.Swapint           = 100;
     opt.iterMax           = 1000000;
     
-    opt.temperature       = [1 100];
+    opt.temperature       = [1];
     opt.Nchain            = length(opt.temperature);
     opt.epsilon           = 0.15;
     opt.iterationNum      = 0;
